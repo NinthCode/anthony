@@ -1,0 +1,2 @@
+#!/bin/sh
+/opt/jdk1.8.0_144/bin/java -Xms1g -Xmx1g -XX:PermSize=256m -XX:MaxPermSize=256m -XX:+DisableExplicitGC -Xss512k -XX:+PrintGCDetails -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCApplicationConcurrentTime -XX:+PrintHeapAtGC -XX:+PrintGCTimeStamps -Xloggc:/app/anthony/logs/gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/app/anthony/logs  -jar /app/anthony/ms-pharos.jar >/app/anthony/logs/catalina.out 2>&1 &
