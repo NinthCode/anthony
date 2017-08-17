@@ -3,17 +3,21 @@ package com.paouke.practice.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.paouke.practice.common.constant.DictConstant;
 import com.paouke.practice.common.helper.DataBuildHelper;
+import com.paouke.practice.common.util.MD5Util;
+import com.paouke.practice.common.util.StringUtil;
 import com.paouke.practice.dao.RoleDao;
 import com.paouke.practice.dao.UserDao;
 import com.paouke.practice.domain.RoleEntity;
 import com.paouke.practice.domain.UserEntity;
 import com.paouke.practice.domain.UserRequestVo;
+import com.paouke.practice.domain.UserResponseVo;
 import com.paouke.practice.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sun.security.provider.MD5;
 
 import javax.xml.ws.Action;
 import java.util.Date;
@@ -34,25 +38,27 @@ public class UserServiceImpl implements UserService {
     @Autowired
     RoleDao roleDao;
 
-    public UserEntity register(UserRequestVo requestVo) {
+    public UserResponseVo register(UserRequestVo requestVo) {
         UserEntity userEntity = new UserEntity();
+        UserResponseVo userResponseVo = new UserResponseVo();
+        String checkRes = checkRegister(requestVo);
+        if(!DictConstant.DICT_RET_SUCCESS.equals(checkRes)) {
+            userResponseVo.setStatus(false);
+            userResponseVo.setCode(checkRes);
+            return userResponseVo;
+        }
         userEntity.setUserName(requestVo.getAccount());
-        userEntity.setGender(DictConstant.DICT_GENDER_MAN.equals(requestVo.getSex()) ? 1 :
-                DictConstant.DICT_GENDER_WOMAN.equals(requestVo.getSex()) ? 0 : 2);
-        userEntity.setBirthday(requestVo.getBirthday());
-        userEntity.setEmail(requestVo.getEmail());
-        userEntity.setName(requestVo.getName());
-        userEntity.setHeadPhoto(requestVo.getPhoto());
-        userEntity.setInheritOrganizationPower(requestVo.getInheritOrganizationPower());
-        userEntity.setPassword(requestVo.getPassword());//TODO
-        userEntity.setOrganizationId(requestVo.getOrganizationId());
+        userEntity.setInheritOrganizationPower(DictConstant.DICT_BOOL_YES);
+        userEntity.setPassword(MD5Util.md5(requestVo.getPassword()));
         userEntity.setRegisterTime(new Date());
         userEntity.setStatus(DictConstant.DICT_STATUS_NOT_ACTIVE);
         userEntity.setRegisterType(DictConstant.DICT_REG_TYPE_ANDROID);
         userEntity.setOperatorTime(new Date());
-        userEntity.setPhoneNumber(requestVo.getPhoneNumber());
         userEntity = userDao.saveAndFlush(userEntity);
-        return userEntity;
+        userResponseVo.setStatus(true);
+        userResponseVo.setUserName(userEntity.getUserName());
+        userResponseVo.setCode(DictConstant.DICT_RET_SUCCESS);
+        return userResponseVo;
     }
 
     public boolean updatePassword(UserRequestVo requestVo) {
@@ -78,5 +84,20 @@ public class UserServiceImpl implements UserService {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private String checkRegister(UserRequestVo userRequestVo) {
+        String userName = userRequestVo.getAccount();
+        if(StringUtil.isBlank(userName) || userName.length() > 20) {
+            return DictConstant.DICT_RET_ERROR_USERNAME;
+        }
+        List<UserEntity> userEntitys = userDao.findAllByUserName(userName);
+        if(userEntitys.size() != 0) {
+            return DictConstant.DICT_RET_USER_EXIST;
+        }
+        if(StringUtil.isBlank(userRequestVo.getPassword()) || userRequestVo.getPassword().trim().length() < 8) {
+            return DictConstant.DICT_RET_ERROR_PASSWD;
+        }
+        return DictConstant.DICT_RET_SUCCESS;
     }
 }

@@ -3,6 +3,7 @@ package com.paouke.practice.service;
 import com.alibaba.fastjson.JSONObject;
 import com.paouke.practice.domain.UserEntity;
 import com.paouke.practice.domain.UserRequestVo;
+import com.paouke.practice.domain.UserResponseVo;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +13,7 @@ import java.util.Map;
  */
 public interface UserService {
 
-    UserEntity register(UserRequestVo requestVo);
+    UserResponseVo register(UserRequestVo requestVo);
 
     boolean updatePassword(UserRequestVo requestVo);
 
